@@ -51,8 +51,12 @@ jobs:
 
       - name: Build Debug APK with Gradle
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-configuration-cache
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --stacktrace --no-configuration-cache
+          else
+            gradle assembleDebug --stacktrace --no-configuration-cache
+          fi
 
       - name: Locate and Rename APK
         run: |
