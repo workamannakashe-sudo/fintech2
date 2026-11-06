@@ -1,0 +1,97 @@
+name: Build & Release BudgetMitra APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Install Node Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Unit Tests
+        run: npm test
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Copy Assets to Android App
+        run: |
+          mkdir -p app/src/main/assets/public
+          cp -r dist/* app/src/main/assets/public/
+
+      - name: Grant Execute Permission for Gradle Wrapper
+        run: chmod +x gradlew || chmod +x ./gradlew || true
+
+      - name: Build Debug APK with Gradle
+        run: |
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace
+          else
+            gradle assembleDebug --stacktrace
+          fi
+
+      - name: Locate & Rename APK
+        run: |
+          mkdir -p build-artifacts
+          find . -name "*.apk" -type f
+          APK_FILE=$(find . -name "*-debug.apk" -type f | head -n 1)
+          if [ -n "$APK_FILE" ]; then
+            cp "$APK_FILE" build-artifacts/BudgetMitra.apk
+            echo "Copied $APK_FILE to build-artifacts/BudgetMitra.apk"
+          else
+            echo "Error: No APK found!"
+            exit 1
+          fi
+
+      - name: Upload APK Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BudgetMitra-APK
+          path: build-artifacts/BudgetMitra.apk
+          retention-days: 14
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: apk-latest
+          name: "BudgetMitra APK (Latest Build)"
+          body: |
+            ### BudgetMitra — Student Money Manager (Offline-First)
+            Automatic build from commit: ${{ github.sha }}
+
+            - **Target Platform**: Android 7.0+ (API 24+)
+            - **Privacy**: 100% on-device SQLite, zero telemetry
+            - **SMS Tracker**: Native Indian bank debit parser
+            - **Permissions Guide**: On Android 13+, allow restricted settings via App Info to enable SMS detection.
+          files: build-artifacts/BudgetMitra.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

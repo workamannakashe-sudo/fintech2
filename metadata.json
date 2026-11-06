@@ -1,0 +1,6 @@
+{
+  "name": "BudgetMitra",
+  "description": "Student money manager for college students in India with on-device SMS tracking, budget planning, bill splitting, and financial health scoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
