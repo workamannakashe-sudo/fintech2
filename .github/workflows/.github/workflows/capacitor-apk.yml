@@ -1,0 +1,72 @@
+name: Build BudgetMitra APK (Capacitor)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Make sure Capacitor CLI and Android platform are present
+        run: |
+          npm ls @capacitor/cli >/dev/null 2>&1 || npm i -D @capacitor/cli@^8 --legacy-peer-deps
+          npm ls @capacitor/android >/dev/null 2>&1 || npm i @capacitor/android@^8 --legacy-peer-deps
+          [ -f capacitor.config.ts ] || [ -f capacitor.config.json ] || \
+            npx cap init BudgetMitra com.budgetmitra.app --web-dir=dist
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Create Android project (fresh, so no stale config)
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect APK
+        run: |
+          mkdir -p build-artifacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk build-artifacts/BudgetMitra.apk
+          ls -lh build-artifacts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BudgetMitra-apk
+          path: build-artifacts/BudgetMitra.apk
+          retention-days: 14
+
+      - name: Publish to apk-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --cleanup-tag -y || true
+          gh release create apk-latest build-artifacts/BudgetMitra.apk \
+            --title "BudgetMitra APK (latest)" \
+            --notes "Debug APK built from commit ${GITHUB_SHA}" \
+            --target "${GITHUB_SHA}"
