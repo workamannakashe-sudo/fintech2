@@ -76,7 +76,7 @@ export class NativeBridgeService {
    */
   public static async openShareSheet(title: string, text: string, url?: string): Promise<boolean> {
     try {
-      if (await Share.canShare().then((res) => res.value).catch(() => false)) {
+      if (await Share.canShare().then((res: { value: boolean }) => res.value).catch(() => false)) {
         await Share.share({
           title,
           text,

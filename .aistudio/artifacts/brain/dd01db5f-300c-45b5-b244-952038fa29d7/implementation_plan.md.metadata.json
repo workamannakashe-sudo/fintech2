@@ -1,6 +1,0 @@
-{
-  "summary": "Comprehensive implementation plan for BudgetMitra — an offline-first student money manager for Indian college students built with React 19, TypeScript, Vite, Tailwind CSS v4, and Capacitor 8 Android integration with on-device SQLite, native SMS parser plugin, multilingual support (English, Hindi, Marathi), financial health analytics, bill splitting with WhatsApp and UPI deep linking, loan/EMI calculator, scholarship matcher, and full APK build pipeline.",
-  "updatedAt": "2026-11-06T10:02:49.694996782Z",
-  "requestFeedback": true,
-  "userFacing": true
-}
