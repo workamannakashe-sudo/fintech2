@@ -1,57 +1,74 @@
-# BudgetMitra — Student Money Manager (₹, UPI, English / हिन्दी / मराठी)
+# 💰 BudgetMitra — Student Money Manager
 
-**BudgetMitra** is an offline-first, privacy-respecting financial companion designed specifically for college students in India. It works both as a modern web application and as an installable native Android APK.
+Track spending automatically from your **bank SMS**, plan budgets, check "Can I afford this?", split bills and find scholarships — built for college students in India (₹, UPI, Hindi / Marathi support).
 
----
-
-## Key Highlights
-
-- **100% On-Device & Zero Cloud**: Your money data never leaves your phone. No logins, no Supabase, no external telemetry.
-- **Automated Bank SMS Tracker**: Native on-device SMS parser for SBI, HDFC, ICICI, Axis, Kotak, PNB, Canara, BoB, Paytm, PhonePe, and generic UPI alerts. Only logs positive debits; strictly ignores OTPs, inward credits, promotional loans, and failed attempts.
-- **Financial Health Score (0–100, Grade A+ to D)**: Multi-pillar health score derived from Savings Rate, Budget Adherence, Anomaly Risk, and Logging Discipline with daily rule-based insights.
-- **"Can I Afford This?" Pre-Purchase Simulator**: Multilingual simulator (English, Hindi, Marathi) checking real-time cash runway impact and semester savings goal delays.
-- **Split the Bill & WhatsApp Pay**: Split bills equally or by custom percentage with exact paisa precision, receipt image scanner, and WhatsApp deep-linking with individual `upi://pay` links.
-- **Student Loans & 0% EMI Calculator**: Amortization schedules and accelerated payoff calculations showing interest and months saved.
-- **Indian Scholarship Matcher**: Instant matching against PMSS, Post-Matric OBC, Tata Trusts, CSSS, Vidya Lakshmi, Bihar Credit Card, AICTE Pragati, and Gujarat MYSY schemes with document checklists.
-- **Envelope Budgeting**: Real-time spending velocity and projected balance exhaustion date with what-if sliders.
-- **Gamification**: Streaks, XP, achievement badges, confetti rewards, and a GitHub-style 90-day activity heatmap.
-- **Backup & Restore**: Export and import complete encrypted JSON archives via device share sheet or local filesystem.
+Glassmorphism UI · light & dark mode · works as a website and as an **Android app**.
 
 ---
 
-## Tech Stack
+## ✨ Headline feature: SMS Tracker (Android)
 
-- **Frontend**: React 19, TypeScript (Strict), Vite, Tailwind CSS v4, Lucide React, Framer Motion, Recharts
-- **Storage**: On-device SQLite / IndexedDB abstraction with versioned migrations
-- **Document & Export**: jsPDF, jsPDF-AutoTable, PapaParse (CSV)
-- **Mobile Engine**: Android SDK (API 24 to 36), Native Java SMS Reader Plugin, FileProvider
-- **Testing & Quality**: Vitest, React Testing Library, Oxlint
+Your bank and UPI alerts become spending — no typing.
 
----
+| | |
+|---|---|
+| **Live** | A new debit SMS is added to Expenses the moment it arrives (app open). |
+| **Catch-up** | Alerts that arrived while the app was closed are added when you open it. |
+| **Safe** | Each SMS is imported once. Every auto-add has a one-tap **Undo**. |
+| **Smart filter** | Only money going **out** is added. Salary, refunds, OTPs, promos, failed payments, bill reminders and chats from friends are ignored. |
+| **Private** | SMS are read and parsed on the phone. Nothing is uploaded. |
 
-## How to Build & Install on Android Phone
+Understands alerts from SBI, HDFC, ICICI, Axis, Kotak, PNB, Canara, Bank of Baroda, Paytm, PhonePe and other UPI apps, including card spends, UPI `VPA` payments and `Info:` style narrations.
 
-### Step 1: Push to GitHub
+**First run:** SMS Tracker → *Allow SMS access* → optionally *Scan past messages* to review the last 7 / 30 / 90 days → switch on *Auto-add new spending*.
+
+> **Android 13+ note:** for apps installed from an APK file, Android may grey out the SMS permission. Open *Settings → Apps → BudgetMitra → ⋮ → Allow restricted settings*, then grant the permission.
+> **Distribution note:** Google Play restricts SMS permissions to a few app categories. Share the APK directly; a Play Store release would need an SMS permission declaration.
+
+## 🏦 Import from Bank (any platform)
+
+Expenses → **Import from Bank**: pull spending from a **bank statement PDF** (password-protected ones too), a **bank / UPI CSV**, or **pasted SMS**. You review every row (category editable), duplicates are flagged, and credits are shown but never counted as spending.
+
+## 📚 Other features
+
+Dashboard & financial-health score · Expenses with spike detection · Budget envelopes & goals · Loan / EMI simulator · "Can I afford this?" (rule-based verdict in EN / हिं / मरा) · Split the bill · Scholarship & scheme eligibility · Habits & streaks · PDF monthly report · Guest and demo modes · Offline-first with local storage.
+
+## 📱 Get the APK
+
+The app is wrapped with [Capacitor](https://capacitorjs.com). GitHub Actions (`.github/workflows/android-apk.yml`) builds **BudgetMitra.apk** on every push to `main` and attaches it to the **`apk-latest`** release — one stable download link.
+
+Local build: `npm run android:sync && npm run android:open` (Android Studio, JDK 21).
+
+Optional repo secrets for cloud sync: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Without them the app runs fully in local mode.
+
+## 🧰 Tech stack
+
+React 19 · TypeScript (strict) · Vite · Tailwind CSS v4 · Framer Motion · Recharts · Supabase (optional) · Capacitor 8 (Android) · pdf.js · jsPDF · Vitest + Testing Library.
+
+## 🧪 Run it
+
 ```bash
-git add .
-git commit -m "feat: complete BudgetMitra student money manager"
-git push origin main
+npm install
+npm run dev        # http://localhost:5173
+npm test           # unit + component tests
+npm run build      # type-check + production build
 ```
 
-### Step 2: Automated APK Build via GitHub Actions
-1. Navigate to the **Actions** tab on your GitHub repository.
-2. Select the **Build & Release BudgetMitra APK** workflow.
-3. The workflow will automatically test, compile the web assets, build the Android APK with Gradle, and upload `BudgetMitra.apk` both as a workflow artifact and as a GitHub Release tagged `apk-latest`.
+## 🗂 Where things live
 
-### Step 3: Installing the APK on Android
-1. Download `BudgetMitra.apk` from the GitHub Release directly on your phone.
-2. Tap on the APK to install. If prompted, enable **Install unknown apps** for your browser or file manager.
-3. Open BudgetMitra.
+```
+src/utils/smsGeneric.ts      format-agnostic SMS understanding (direction, amount, merchant, OTP/promo filters)
+src/utils/smsParser.ts       bank-specific patterns + generic fallback
+src/services/smsInbox.ts     bridge to the native Android plugin, SMS → transaction
+src/context/SmsTrackerContext.tsx   live capture, catch-up, de-dupe, undo
+src/pages/SmsTracker.tsx     SMS Tracker screen
+src/utils/statementParser.ts + src/services/pdfText.ts   CSV / PDF / SMS statement extraction
+src/components/StatementImportModal.tsx                  review & import UI
+android/app/src/main/java/com/budgetmitra/app/SmsReaderPlugin.java   native SMS reader
+```
 
-### Step 4: Android 13+ SMS Permission ("Allow Restricted Settings")
-On Android 13 and higher, Google blocks accessibility and SMS permissions for sideloaded APKs by default. To enable automatic SMS tracking:
-1. Long-press the **BudgetMitra** app icon on your home screen and tap **App info** (or go to `Settings -> Apps -> BudgetMitra`).
-2. Tap the **3-dots menu** in the top-right corner.
-3. Tap **Allow restricted settings**.
-4. Authenticate with your fingerprint or device PIN.
-5. Re-open BudgetMitra and tap **Grant** in the Permissions tab.
+See [ARCHITECTURE.md](ARCHITECTURE.md), [PROJECT.md](PROJECT.md) and [DESIGN.md](DESIGN.md) for more.
+
+---
+
+Built for the **SkillUp Hackathon × IBM SkillsBuild** — Financial Literacy.
